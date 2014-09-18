@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content_title %}Test Page - all values{% endblock %}
+
+{% block content %}
+  <ul>
+    {% for pv in values %}
+      <li>{{ pv }}</li>
+    {% endfor %}
+  </ul>
+{% endblock %}

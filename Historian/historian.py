@@ -11,4 +11,4 @@ from views import *
 # call config and setup methods for api etc
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
