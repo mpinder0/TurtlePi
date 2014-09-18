@@ -22,10 +22,3 @@ def before_request():
 def after_request(response):
     g.db.close()
     return response
-
-
-#def create_tables():
-#    User.create_table()
-#    Relationship.create_table()
-#    Message.create_table()
-#    Note.create_table()
