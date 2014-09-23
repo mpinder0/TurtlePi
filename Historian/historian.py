@@ -8,7 +8,7 @@ from models import *
 from api import *
 from views import *
 
-# call config and setup methods for api etc
 
 if __name__ == "__main__":
+    create_tables()
     app.run(debug=True)

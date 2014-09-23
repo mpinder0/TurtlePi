@@ -12,12 +12,40 @@ from models import Point, PointValue
 from utils import *
 
 
-
 @app.route('/api/point/<string:point_name>', methods=['GET'])
 def get_point(point_name):
-    obj = get_object_or_404(Point, Point.name == point_name)
-    dictionary = get_dictionary_from_model(obj)
+    point = get_object_or_404(Point, Point.name == point_name)
+    dictionary = get_dictionary_from_model(point)
     return jsonify(dictionary)
+
+
+@app.route('/api/point/<string:point_name>', methods=['POST'])
+def set_point(point_name):
+    filter_type = request.args.get("filter_type")
+    filter_value = request.args.get("filter_value")
+    limit_hours = request.args.get("limit")
+
+    try:
+        point = Point.get(Point.name == point_name)
+    except DoesNotExist:
+        point = Point()
+        point.name = point_name
+
+    if filter_type is not None:
+        try:
+            point.filter_type = int(filter_type)
+            point.filter_value = float(filter_value)
+        except (TypeError, ValueError):
+            abort(400)
+
+    if limit_hours is not None:
+        try:
+            point.limit_hours = int(limit_hours)
+        except (TypeError, ValueError):
+            abort(400)
+
+    point.save()
+    return jsonify(get_dictionary_from_model(point))
 
 
 @app.route('/api/point_value/<string:point_name>', methods=['GET'])
@@ -42,7 +70,14 @@ def get_point_value(point_name):
 
 
 def get_all_values(point_name):
+    enforce_point_limit(point_name)
+
     query = PointValue.select().join(Point).where(Point.name == point_name)
+    return get_dictionary_from_query(query)
+
+
+def get_last_value(point_name):
+    query = PointValue.select().join(Point).where(Point.name == point_name).limit(1)
     return get_dictionary_from_query(query)
 
 
@@ -81,5 +116,45 @@ def set_point_value(point_name, value):
         point = Point.get(Point.name == point_name)
     except DoesNotExist:
         abort(404)
-    new_value = PointValue.create(point_id=point, value=value)
-    return jsonify(get_dictionary_from_model(new_value))
+
+    new_value = PointValue()
+    new_value.point = point
+    new_value.value = value
+    value_dict = get_dictionary_from_model(new_value)
+
+    if value_filter_pass(point, value):
+        new_value.save(force_insert=True)
+        value_dict['filter_passed'] = True
+    else:
+        value_dict['filter_passed'] = False
+
+    return jsonify(value_dict)
+
+
+def value_filter_pass(point, value):
+    if point.filter_type == 1:
+        # fixed hysteresis
+        try:
+            last_value = point.values.get().value
+        except DoesNotExist:
+            return True
+
+        value_lower = last_value - point.filter_value
+        value_upper = last_value + point.filter_value
+        if (value <= value_lower) | (value >= value_upper):
+            return True
+        return False
+    else:
+        return True
+
+
+def enforce_point_limit(point_name):
+    point = get_object_or_404(Point, Point.name == point_name)
+    if point.limit_hours > 0:
+        limit_hours = timedelta(hours=point.limit_hours)
+        cut_off = datetime.now() - limit_hours
+
+        PointValue.delete()\
+            .where(PointValue.point == point)\
+            .where(PointValue.timestamp < cut_off)\
+            .execute()
