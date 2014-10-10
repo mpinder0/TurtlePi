@@ -13,6 +13,7 @@ class Scheduler():
     _stop_request = None
     _tread = None
     _tasks = []
+    _task_args = []
 
     def __init__(self, interval):
         self.interval = interval
@@ -31,28 +32,11 @@ class Scheduler():
     def work(self):
         while not self._stop_request:
             print datetime.now()
-            for task in self._tasks:
-                task()
+            for i, task in enumerate(self._tasks):
+                task(*self._task_args[i])
             time.sleep(self.interval)
 
     def add_task(self, task, *args):
         if callable(task):
             self._tasks.append(task)
-
-
-def test():
-    print "test"
-
-if __name__ == "__main__":
-        scheduler = Scheduler(1)
-        scheduler.start()
-
-        time.sleep(5)
-        scheduler.add_task(test)
-
-        time.sleep(5)
-        scheduler.stop()
-
-        #response = urllib2.urlopen("http://127.0.0.1:5000/api/point/temperature1").read()
-        #response_dict = json.loads(response)
-        #print response
+            self._task_args.append(args)
