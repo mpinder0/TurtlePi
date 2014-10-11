@@ -4,14 +4,12 @@ scheduler for gathering data
 from datetime import datetime
 import time
 from threading import Thread
-import urllib2
-import json
 
 
 class Scheduler():
     interval = None
     _stop_request = None
-    _tread = None
+    _thread = None
     _tasks = []
     _task_args = []
 
@@ -20,18 +18,18 @@ class Scheduler():
 
     def start(self, join=False):
         self._stop_request = False
-        self._tread = Thread(target=self.work)
-        self._tread.start()
+        self._thread = Thread(target=self.work)
+        self._thread.daemon = True
+        self._thread.start()
         if join:
-            self._tread.join()
+            self._thread.join()
 
     def stop(self):
         self._stop_request = True
-        self._tread.join()
+        self._thread.join()
 
     def work(self):
         while not self._stop_request:
-            print datetime.now()
             for i, task in enumerate(self._tasks):
                 task(*self._task_args[i])
             time.sleep(self.interval)

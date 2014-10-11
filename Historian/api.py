@@ -115,7 +115,9 @@ def set_point_value(point_name, value):
     try:
         point = Point.get(Point.name == point_name)
     except DoesNotExist:
-        abort(404)
+        point = Point()
+        point.name = point_name
+        point.save()
 
     new_value = PointValue()
     new_value.point = point
