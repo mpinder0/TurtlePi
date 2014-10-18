@@ -1,4 +1,5 @@
 import struct, array, time, io, fcntl
+from threading import Lock
 from abstractdataprovider import AbstractDataProvider
 
 I2C_SLAVE = 0x0703
@@ -34,6 +35,8 @@ class i2c(object):
 
 
 class HTU21D(AbstractDataProvider):
+    _lock = Lock()
+
     def __init__(self):
         self.dev = i2c(HTU21D_ADDR, 1)  #HTU21D 0x40, bus 1
         self.dev.write(CMD_SOFT_RESET)  #soft reset
@@ -67,30 +70,32 @@ class HTU21D(AbstractDataProvider):
             return False
 
     def read_temperature(self):
-        self.dev.write(CMD_READ_TEMP_NOHOLD)  #measure temp
-        time.sleep(.1)
+        with self._lock:
+            self.dev.write(CMD_READ_TEMP_NOHOLD)  #measure temp
+            time.sleep(.1)
 
-        data = self.dev.read(3)
-        buf = array.array('B', data)
+            data = self.dev.read(3)
+            buf = array.array('B', data)
 
-        if self.crc8check(buf):
-            temp = (buf[0] << 8 | buf[1]) & 0xFFFC
-            return self.ctemp(temp)
-        else:
-            return -255
+            if self.crc8check(buf):
+                temp = (buf[0] << 8 | buf[1]) & 0xFFFC
+                return self.ctemp(temp)
+            else:
+                return -255
 
     def read_humidity(self):
-        self.dev.write(CMD_READ_HUM_NOHOLD)  #measure humidity
-        time.sleep(.1)
+        with self._lock:
+            self.dev.write(CMD_READ_HUM_NOHOLD)  #measure humidity
+            time.sleep(.1)
 
-        data = self.dev.read(3)
-        buf = array.array('B', data)
+            data = self.dev.read(3)
+            buf = array.array('B', data)
 
-        if self.crc8check(buf):
-            humid = (buf[0] << 8 | buf[1]) & 0xFFFC
-            return self.chumid(humid)
-        else:
-            return -255
+            if self.crc8check(buf):
+                humid = (buf[0] << 8 | buf[1]) & 0xFFFC
+                return self.chumid(humid)
+            else:
+                return -255
 
     def get_value(self, name=None):
         if name == 'Temperature':
@@ -100,5 +105,5 @@ class HTU21D(AbstractDataProvider):
 
 if __name__ == "__main__":
     obj = HTU21D()
-    print "Temp:", round(obj.read_tmperature(), 2), "C"
-    print "Humid: ", round(obj.read_humidity(), 2), "%rH"
+    print "Temp:", round(obj.read_temperature(), 2), "C"
+    print "Humid:", round(obj.read_humidity(), 2), "%rH"
