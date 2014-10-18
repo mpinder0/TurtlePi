@@ -1,37 +1,36 @@
 from scheduler import Scheduler
-import urllib, urllib2
 from HTU21D import HTU21D
 from w1_Temperature import W1Temperature
-from abstractdataprovider import AbstractDataProvider
-import json
+import signal
+import sys
 
 
-historian_url = "http://127.0.0.1:5000/"
+def signal_handler(signal, frame):
+    print "Exiting..."
+    scheduler.stop()
+    sys.exit(0)
 
+historian_url = "http://192.168.0.16:5000/"
 
-def http_post_value(name, value):
-    api_req_url = "%sapi/point_value/%s/%.2f" % (historian_url, name, value)
-    post_values = urllib.urlencode({'Submit': True})
-    response = urllib2.urlopen(api_req_url, post_values)
-    result = response.read()
-    result_dict = json.loads(result)
-    has_passed = result_dict["filter_passed"]
-    print "filter passed: %s" % has_passed
+w1_temps = W1Temperature()
+humidity = HTU21D()
+w1_sensors = w1_temps.connected_sensors()
 
+scheduler = Scheduler(historian_url)
+interval = 5
 
-def post_provider_value(data_provider, sensor_name=None):
-    if isinstance(data_provider, AbstractDataProvider):
-        value = data_provider.get_value(sensor_name)
-        http_post_value(sensor_name, value)
-        print "%s - %.2f" % (sensor_name, value)
+for sensor in w1_sensors:
+    scheduler.add_sensor(interval, w1_temps, sensor, sensor)
 
-if __name__ == "__main__":
-    w1_temps = W1Temperature()
-    w1_sensors = w1_temps.connected_sensors()
+scheduler.add_sensor(interval, humidity, "Temperature", "HTU21D_Temp")
+scheduler.add_sensor(interval, humidity, "Humidity", "HTU21D_Hum")
 
-    scheduler = Scheduler(10)
+signal.signal(signal.SIGINT, signal_handler)
+scheduler.start()
 
-    for sensor in w1_sensors:
-        scheduler.add_task(post_provider_value, w1_temps, sensor)
-
-    scheduler.start(join=True)
+app_exit = False
+while not app_exit:
+    in_string = raw_input("Command (Q to exit):")
+    if in_string == "Q":
+        scheduler.stop()
+        app_exit = True
