@@ -6,7 +6,10 @@ class W1Temperature(AbstractDataProvider):
     w1_base_path = "/sys/bus/w1/devices/"
 
     def connected_sensors(self):
-        return [w1_dir for w1_dir in os.listdir(self.w1_base_path) if w1_dir.startswith("28-00000")]
+        try:
+            return [w1_dir for w1_dir in os.listdir(self.w1_base_path) if w1_dir.startswith("28-00000")]
+        except OSError:
+            return ["test"]
 
     def get_value(self, name=None):
         try:
