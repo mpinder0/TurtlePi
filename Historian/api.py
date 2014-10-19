@@ -40,7 +40,7 @@ def set_point(point_name):
 
     if limit_hours is not None:
         try:
-            point.limit_hours = int(limit_hours)
+            point.limit_hours = int(limit_hours), 201
         except (TypeError, ValueError):
             abort(400)
 
@@ -130,7 +130,7 @@ def set_point_value(point_name, value):
     else:
         value_dict['filter_passed'] = False
 
-    return jsonify(value_dict)
+    return jsonify(value_dict), 201
 
 
 def value_filter_pass(point, value):
