@@ -68,8 +68,11 @@ class Scheduler():
         try:
             api_req_url = "%sapi/point_value/%s/%.2f" % (self.historian_url, point_name, value)
             response = requests.post(api_req_url)
-            response_dict = response.json()
-            has_passed = response_dict["filter_passed"]
-            print "%s - %.2f - written: %s" % (point_name, value, has_passed)
+            if response.status_code == 201:
+                response_dict = response.json()
+                has_passed = response_dict["filter_passed"]
+                print "%s - %.2f - written: %s" % (point_name, value, has_passed)
+            else:
+                print "Post failed for \"%s\": return code %s" % (point_name, response.status_code)
         except requests.ConnectionError:
             print "Post failed for \"%s\": ConnectionError" % point_name

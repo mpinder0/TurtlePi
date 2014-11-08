@@ -19,9 +19,9 @@ w1_sensors = w1_temps.connected_sensors()
 scheduler = Scheduler(historian_url)
 interval = 5
 
+# add sensors to be recorded to the scheduler
 for sensor in w1_sensors:
     scheduler.add_sensor(interval, w1_temps, sensor, sensor)
-
 scheduler.add_sensor(interval, humidity, "Temperature", "HTU21D_Temp")
 scheduler.add_sensor(interval, humidity, "Humidity", "HTU21D_Hum")
 

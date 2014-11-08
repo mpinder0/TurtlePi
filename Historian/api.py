@@ -8,7 +8,7 @@ from flask import jsonify
 from flask import request
 
 from app import app
-from models import Point, PointValue
+from models import *
 from utils import *
 
 
@@ -50,6 +50,9 @@ def set_point(point_name):
 
 @app.route('/api/point_value/<string:point_name>', methods=['GET'])
 def get_point_value(point_name):
+    if not point_name in point_models:
+        abort(404)
+
     query_from = request.args.get("from")
     query_to = request.args.get("to")
     query_at = request.args.get("at")
@@ -70,14 +73,14 @@ def get_point_value(point_name):
 
 
 def get_all_values(point_name):
-    enforce_point_limit(point_name)
+    # enforce_point_limit(point_name)
 
-    query = PointValue.select().join(Point).where(Point.name == point_name)
+    query = point_models[point_name].select()
     return get_charts_dict_from_query(query)
 
 
 def get_last_value(point_name):
-    query = PointValue.select().join(Point).where(Point.name == point_name).limit(1)
+    query = point_models[point_name].select().limit(1)
     return get_dictionary_from_query(query)
 
 
@@ -88,9 +91,9 @@ def get_values_between(point_name, query_from, query_to):
     except ValueError:
         abort(400)
 
-    query = PointValue.select().join(Point)\
-        .where(Point.name == point_name)\
-        .where(PointValue.timestamp.between(timestamp_from, timestamp_to))
+    model_class = point_models[point_name]
+    query = model_class.select()\
+        .where(model_class.timestamp.between(timestamp_from, timestamp_to))
 
     return get_charts_dict_from_query(query)
 
@@ -102,9 +105,9 @@ def get_value_at(point_name, query_at):
         abort(400)
 
     span = timedelta(microseconds=999999)
-    query = PointValue.select().join(Point)\
-        .where(Point.name == point_name)\
-        .where(PointValue.timestamp.between(timestamp_at, timestamp_at + span))\
+    model_class = point_models[point_name]
+    query = model_class.select()\
+        .where(model_class.timestamp.between(timestamp_at, timestamp_at + span))\
         .limit(1)
 
     return get_dictionary_from_query(query)
@@ -112,19 +115,14 @@ def get_value_at(point_name, query_at):
 
 @app.route('/api/point_value/<string:point_name>/<float:value>', methods=['POST'])
 def set_point_value(point_name, value):
-    try:
-        point = Point.get(Point.name == point_name)
-    except DoesNotExist:
-        point = Point()
-        point.name = point_name
-        point.save()
+    if not point_name in point_models:
+        add_point(point_name)
 
-    new_value = PointValue()
-    new_value.point = point
+    new_value = point_models[point_name]()
     new_value.value = value
     value_dict = get_dictionary_from_model(new_value)
 
-    if value_filter_pass(point, value):
+    if value_filter_pass(point_name, value):
         new_value.save(force_insert=True)
         value_dict['filter_passed'] = True
     else:
@@ -133,11 +131,12 @@ def set_point_value(point_name, value):
     return jsonify(value_dict), 201
 
 
-def value_filter_pass(point, value):
+def value_filter_pass(point_name, value):
+    point = Point.get(Point.name == point_name)
     if point.filter_type == 1:
         # fixed hysteresis
         try:
-            last_value = point.values.get().value
+            last_value = point_models[point_name].get().value
         except DoesNotExist:
             return True
 
@@ -145,7 +144,8 @@ def value_filter_pass(point, value):
         value_upper = last_value + point.filter_value
         if (value <= value_lower) | (value >= value_upper):
             return True
-        return False
+        else:
+            return False
     else:
         return True
 
@@ -156,7 +156,7 @@ def enforce_point_limit(point_name):
         limit_hours = timedelta(hours=point.limit_hours)
         cut_off = datetime.now() - limit_hours
 
-        PointValue.delete()\
-            .where(PointValue.point == point)\
-            .where(PointValue.timestamp < cut_off)\
+        model_class = point_models[point_name]
+        model_class.delete()\
+            .where(model_class.timestamp < cut_off)\
             .execute()
