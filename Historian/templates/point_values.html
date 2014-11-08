@@ -6,7 +6,7 @@
             google.load('visualization', '1', {'packages':['annotationchart']});
             google.setOnLoadCallback(drawChart);
             function drawChart() {
-                $.getJSON("http://127.0.0.1:5000/api/point_value/{{point_name}}")
+                $.getJSON("/api/point_value/{{point_name}}")
                     .done(function(data) {
                         //document.write(JSON.stringify(data));
                         var data_table = new google.visualization.DataTable(data);
