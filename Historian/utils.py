@@ -43,6 +43,31 @@ def get_dictionary_from_query(query):
     return dictionary
 
 
+def get_charts_dict_from_query(query):
+    results = get_dictionary_from_query(query)
+    charts_dict = {
+        'cols': [
+            {'label': 'Timestamp', 'type': 'datetime'},
+            {'label': 'Value', 'type': 'number'}
+        ]
+    }
+
+    rows = []
+    for point_value in results.items():
+        timestamp = point_value[1]['timestamp']
+        timestamp_string = "Date({0}, {1}, {2}, {3}, {4}, {5})".format(timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute, timestamp.second)
+        row = {
+            'c': [
+                {'v': timestamp_string},
+                {'v': point_value[1]['value']}
+            ]
+        }
+        rows.append(row)
+
+    charts_dict['rows'] = rows
+    return charts_dict
+
+
 def get_model_from_dictionary(model, field_dict):
     if isinstance(model, Model):
         model_instance = model

@@ -73,7 +73,7 @@ def get_all_values(point_name):
     enforce_point_limit(point_name)
 
     query = PointValue.select().join(Point).where(Point.name == point_name)
-    return get_dictionary_from_query(query)
+    return get_charts_dict_from_query(query)
 
 
 def get_last_value(point_name):
@@ -92,7 +92,7 @@ def get_values_between(point_name, query_from, query_to):
         .where(Point.name == point_name)\
         .where(PointValue.timestamp.between(timestamp_from, timestamp_to))
 
-    return get_dictionary_from_query(query)
+    return get_charts_dict_from_query(query)
 
 
 def get_value_at(point_name, query_at):
