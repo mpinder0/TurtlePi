@@ -67,18 +67,16 @@ def create_point_model(point_name):
 
 
 def add_point(point_name):
-    if point_name in point_models:
+    if point_name in get_point_models():
         return Point.get(Point.name == point_name)
     else:
         # new entry into the point table
         point = Point()
         point.name = point_name
-        point.save()
+        point.save(force_insert=True)
         # new model for point values
         create_point_model(point_name)
         return point
-
-point_models = get_point_models()
 
 
 """

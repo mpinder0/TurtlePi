@@ -50,7 +50,10 @@ def set_point(point_name):
 
 @app.route('/api/point_value/<string:point_name>', methods=['GET'])
 def get_point_value(point_name):
-    if not point_name in point_models:
+    point_models = get_point_models()
+    if point_name in point_models:
+        point_model = point_models[point_name]
+    else:
         abort(404)
 
     query_from = request.args.get("from")
@@ -59,12 +62,12 @@ def get_point_value(point_name):
 
     if (query_from is not None) | (query_to is not None):
         # if "from" or "to" timestamps are present in the query string, get values from that time span.
-        results = get_values_between(point_name, query_from, query_to)
+        results = get_values_between(point_model, query_from, query_to)
     elif query_at is not None:
         # if "at" timestamp is present in the query string, get a single value.
-        results = get_value_at(point_name, query_at)
+        results = get_value_at(point_model, query_at)
     else:
-        results = get_all_values(point_name)
+        results = get_all_values(point_model)
 
     if not results:
         # no objects found matching the request - 404
@@ -72,42 +75,39 @@ def get_point_value(point_name):
     return jsonify(results)
 
 
-def get_all_values(point_name):
+def get_all_values(point_model):
     # enforce_point_limit(point_name)
-
-    query = point_models[point_name].select()
+    query = point_model.select()
     return get_charts_dict_from_query(query)
 
 
-def get_last_value(point_name):
-    query = point_models[point_name].select().limit(1)
+def get_last_value(point_model):
+    query = point_model.select().limit(1)
     return get_dictionary_from_query(query)
 
 
-def get_values_between(point_name, query_from, query_to):
+def get_values_between(point_model, query_from, query_to):
     try:
         timestamp_from = DatetimeConverter.to_python(str(query_from))
         timestamp_to = DatetimeConverter.to_python(str(query_to))
     except ValueError:
         abort(400)
 
-    model_class = point_models[point_name]
-    query = model_class.select()\
-        .where(model_class.timestamp.between(timestamp_from, timestamp_to))
+    query = point_model.select()\
+        .where(point_model.timestamp.between(timestamp_from, timestamp_to))
 
     return get_charts_dict_from_query(query)
 
 
-def get_value_at(point_name, query_at):
+def get_value_at(point_model, query_at):
     try:
         timestamp_at = DatetimeConverter.to_python(str(query_at))
     except ValueError:
         abort(400)
 
     span = timedelta(microseconds=999999)
-    model_class = point_models[point_name]
-    query = model_class.select()\
-        .where(model_class.timestamp.between(timestamp_at, timestamp_at + span))\
+    query = point_model.select()\
+        .where(point_model.timestamp.between(timestamp_at, timestamp_at + span))\
         .limit(1)
 
     return get_dictionary_from_query(query)
@@ -115,10 +115,12 @@ def get_value_at(point_name, query_at):
 
 @app.route('/api/point_value/<string:point_name>/<float:value>', methods=['POST'])
 def set_point_value(point_name, value):
-    if not point_name in point_models:
+    models = get_point_models()
+    if point_name not in models:
         add_point(point_name)
 
-    new_value = point_models[point_name]()
+    models = get_point_models()
+    new_value = models[point_name]()
     new_value.value = value
     value_dict = get_dictionary_from_model(new_value)
 
@@ -136,7 +138,7 @@ def value_filter_pass(point_name, value):
     if point.filter_type == 1:
         # fixed hysteresis
         try:
-            last_value = point_models[point_name].get().value
+            last_value = get_point_models()[point_name].get().value
         except DoesNotExist:
             return True
 
@@ -156,7 +158,7 @@ def enforce_point_limit(point_name):
         limit_hours = timedelta(hours=point.limit_hours)
         cut_off = datetime.now() - limit_hours
 
-        model_class = point_models[point_name]
+        model_class = get_point_models()[point_name]
         model_class.delete()\
             .where(model_class.timestamp < cut_off)\
             .execute()
