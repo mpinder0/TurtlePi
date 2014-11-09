@@ -11,8 +11,8 @@ from utils import *
 
 @app.route('/')
 def test_page():
-    point_values = PointValue.select().order_by(PointValue.timestamp)
-    return render_template('test.html', values=point_values)
+    points = Point.select(Point.name)
+    return render_template('index.html', points=points)
 
 
 @app.route('/point/<string:point_name>', methods=['GET', 'POST'])
@@ -25,13 +25,13 @@ def point(point_name):
             p.filter_value = float(request.form['filter_value'])
             p.limit_hours = int(request.form['limit_hours'])
             p.save()
-            message = "Submit ok"
+            message = "Submit ok."
         except (TypeError, ValueError):
             message = "Value error."
     point_dict = get_dictionary_from_model(p)
     return render_template('point.html', message=message, **point_dict)
 
 
-@app.route('/point_value/<string:point_name>', methods=['GET'])
+@app.route('/point_values/<string:point_name>', methods=['GET'])
 def point_values(point_name):
     return render_template('point_values.html', point_name=point_name)
