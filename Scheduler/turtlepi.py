@@ -3,6 +3,7 @@ from HTU21D import HTU21D
 from w1_Temperature import W1Temperature
 import signal
 import sys
+import time
 
 
 def signal_handler(signal, frame):
@@ -28,9 +29,5 @@ scheduler.add_sensor(interval, humidity, "Humidity", "HTU21D_Hum")
 signal.signal(signal.SIGINT, signal_handler)
 scheduler.start()
 
-app_exit = False
-while not app_exit:
-    in_string = raw_input("Command (Q to exit):")
-    if in_string == "Q":
-        scheduler.stop()
-        app_exit = True
+while True:
+    time.sleep(0.5)

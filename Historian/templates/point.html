@@ -1,0 +1,31 @@
+<html>
+<head>
+    <title>Point</title>
+</head>
+<body>
+    <h2>{{name}}</h2>
+    <h3>{{message}}</h3>
+    <form method="post" action="?">
+        <table>
+            <tr>
+                <td>Filter Type:</td>
+                <td>
+                    <select name="filter_type">
+                        <option value="0"{% if filter_type == 0 %} selected{% endif %}>None</option>
+                        <option value="1"{% if filter_type == 1 %} selected{% endif %}>Fixed</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>Filter Value:</td>
+                <td><input name="filter_value" type="text" value="{{filter_value}}" /></td>
+            </tr>
+            <tr>
+                <td>Limit Hours:</td>
+                <td><input name="limit_hours" type="text" value="{{limit_hours}}" /></td>
+            </tr>
+        </table>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
