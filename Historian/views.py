@@ -34,4 +34,4 @@ def point(point_name):
 
 @app.route('/point_values/<string:point_name>', methods=['GET'])
 def point_values(point_name):
-    return render_template('point_values.html', point_name=point_name)
+    return render_template('point_values.html', name=point_name)

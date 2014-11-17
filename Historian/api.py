@@ -116,11 +116,13 @@ def get_value_at(point_model, query_at):
 @app.route('/api/point_value/<string:point_name>/<float:value>', methods=['POST'])
 def set_point_value(point_name, value):
     models = get_point_models()
-    if point_name not in models:
-        add_point(point_name)
+    if point_name in models:
+        point_model = models[point_name]
+    else:
+        point_model = add_point(point_name)
 
-    models = get_point_models()
-    new_value = models[point_name]()
+    enforce_point_limit(point_name)
+    new_value = point_model()
     new_value.value = value
     value_dict = get_dictionary_from_model(new_value)
 
@@ -153,12 +155,17 @@ def value_filter_pass(point_name, value):
 
 
 def enforce_point_limit(point_name):
-    point = get_object_or_404(Point, Point.name == point_name)
+    try:
+        point = Point.get(Point.name == point_name)
+    except DoesNotExist:
+        abort(500)
+
+    point_model = get_point_models()[point_name]
+
     if point.limit_hours > 0:
         limit_hours = timedelta(hours=point.limit_hours)
         cut_off = datetime.now() - limit_hours
 
-        model_class = get_point_models()[point_name]
-        model_class.delete()\
-            .where(model_class.timestamp < cut_off)\
+        point_model.delete()\
+            .where(point_model.timestamp < cut_off)\
             .execute()

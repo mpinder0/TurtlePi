@@ -3,20 +3,28 @@
         <script type="text/javascript" src="http://www.google.com/jsapi"></script>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
         <script type='text/javascript'>
-            google.load('visualization', '1', {'packages':['annotationchart']});
+            google.load('visualization', '1', {'packages':['corechart','annotationchart']});
             google.setOnLoadCallback(drawChart);
             function drawChart() {
-                $.getJSON("/api/point_value/{{point_name}}")
+                $.getJSON("/api/point_value/{{name}}")
                     .done(function(data) {
-                        //document.write(JSON.stringify(data));
                         var data_table = new google.visualization.DataTable(data);
                         var chart = new google.visualization.AnnotationChart(document.getElementById('chart_div'));
 
                         var options = {
-                            displayAnnotations: true
+                            displayAnnotations: true,
                         };
 
                         chart.draw(data_table, options);
+
+                        var chart2 = new google.visualization.LineChart(document.getElementById('chart_div2'));
+
+                        var options2 = {
+                            legend: 'none',
+                            pointSize: 3
+                        };
+
+                        chart2.draw(data_table, options2);
                     })
                     .fail(function() {
                             console.log( "error" );
@@ -26,6 +34,12 @@
 	</head>
 
 	<body>
-		<div id='chart_div' style='width: 1200px; height: 600px;'></div>
+        <h2>{{name}}</h2>
+        <ul>
+            <li><a href="../">back to list</a></li>
+            <li><a href="../point/{{name}}">{{name}}</a></li>
+        </ul>
+        <div id="chart_div" style="height: 400; width: 800;"></div>
+        <div id="chart_div2" style="height: 400; width: 800;"></div>
 	</body>
 </html>
