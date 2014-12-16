@@ -1,35 +1,29 @@
 <html>
 	<head>
-        <script type="text/javascript" src="http://www.google.com/jsapi"></script>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+        <script src="http://code.highcharts.com/highcharts.js"></script>
         <script type='text/javascript'>
-            google.load('visualization', '1', {'packages':['corechart','annotationchart']});
-            google.setOnLoadCallback(drawChart);
-            function drawChart() {
-                $.getJSON("/api/point_value/{{name}}")
-                    .done(function(data) {
-                        var data_table = new google.visualization.DataTable(data);
-                        var chart = new google.visualization.AnnotationChart(document.getElementById('chart_div'));
-
-                        var options = {
-                            displayAnnotations: true,
-                        };
-
-                        chart.draw(data_table, options);
-
-                        var chart2 = new google.visualization.LineChart(document.getElementById('chart_div2'));
-
-                        var options2 = {
-                            legend: 'none',
-                            pointSize: 3
-                        };
-
-                        chart2.draw(data_table, options2);
-                    })
-                    .fail(function() {
-                            console.log( "error" );
-                    });
-            }
+        $.getJSON("/api/point_values/{{name}}")
+            .done(function(data) {
+                $('#chart_container').highcharts({
+                    title: {
+                        text: null
+                    },
+                    tooltip: {
+                        crosshairs: true
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        title: {
+                            text: 'Timestamp'
+                        }
+                    },
+                    series: data
+                })
+            })
+            .fail(function() {
+                    console.log( "error" );
+            });
         </script>
 	</head>
 
@@ -39,7 +33,6 @@
             <li><a href="../">back to list</a></li>
             <li><a href="../point/{{name}}">{{name}}</a></li>
         </ul>
-        <div id="chart_div" style="height: 400; width: 800;"></div>
-        <div id="chart_div2" style="height: 400; width: 800;"></div>
+        <div id="chart_container" style="height: 400; width: 800;"></div>
 	</body>
 </html>

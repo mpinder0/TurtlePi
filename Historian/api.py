@@ -7,6 +7,8 @@ from datetime import timedelta
 from flask import jsonify
 from flask import request
 
+import json
+
 from app import app
 from models import *
 from utils import *
@@ -48,7 +50,7 @@ def set_point(point_name):
     return jsonify(get_dictionary_from_model(point))
 
 
-@app.route('/api/point_value/<string:point_name>', methods=['GET'])
+@app.route('/api/point_values/<string:point_name>', methods=['GET'])
 def get_point_value(point_name):
     point_models = get_point_models()
     if point_name in point_models:
@@ -67,12 +69,13 @@ def get_point_value(point_name):
         # if "at" timestamp is present in the query string, get a single value.
         results = get_value_at(point_model, query_at)
     else:
-        results = get_all_values(point_model)
+        results = get_point_values_dict(point_name)
 
     if not results:
         # no objects found matching the request - 404
         abort(404)
-    return jsonify(results)
+
+    return app.response_class(json.dumps(results, indent=2), mimetype='application/json')
 
 
 def get_all_values(point_model):
@@ -169,3 +172,35 @@ def enforce_point_limit(point_name):
         point_model.delete()\
             .where(point_model.timestamp < cut_off)\
             .execute()
+
+
+def get_point_model(point_name):
+    point_models = get_point_models()
+    if point_name in point_models:
+        point_model = point_models[point_name]
+    else:
+        abort(404)
+    return point_model
+
+
+def get_point_values_dict(point_name):
+    point_model = get_point_model(point_name)
+
+    query = point_model.select().order_by(point_model.timestamp)
+    results = get_dictionary_from_query(query)
+
+    datapoints = []
+    for point_value in results.items():
+        timestamp = point_value[1]['timestamp']
+        datapoint = [
+            int(timestamp.strftime("%s"))*1000,
+            point_value[1]['value']
+        ]
+        datapoints.append(datapoint)
+
+    point_dict = {
+        'name': point_name,
+        'data': datapoints
+
+    }
+    return [point_dict]
