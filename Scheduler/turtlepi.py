@@ -11,14 +11,14 @@ def signal_handler(signal, frame):
     scheduler.stop()
     sys.exit(0)
 
-historian_url = "http://192.168.0.16:5000/"
+historian_url = "http://127.0.0.1:5000/"
 
 w1_temps = W1Temperature()
 humidity = HTU21D()
 w1_sensors = w1_temps.connected_sensors()
 
 scheduler = Scheduler(historian_url)
-interval = 5
+interval = 30
 
 # add sensors to be recorded to the scheduler
 for sensor in w1_sensors:
