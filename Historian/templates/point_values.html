@@ -1,29 +1,33 @@
 <html>
 	<head>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-        <script src="http://code.highcharts.com/highcharts.js"></script>
+        <script type="text/javascript" src="http://code.highcharts.com/highcharts.js"></script>
         <script type='text/javascript'>
-        $.getJSON("/api/point_values/{{name}}")
-            .done(function(data) {
-                $('#chart_container').highcharts({
-                    title: {
-                        text: null
-                    },
-                    tooltip: {
-                        crosshairs: true
-                    },
-                    xAxis: {
-                        type: 'datetime',
-                        title: {
-                            text: 'Timestamp'
-                        }
-                    },
-                    series: data
-                })
-            })
-            .fail(function() {
-                    console.log( "error" );
-            });
+			var containerName = "#chart_container";
+			var jsonURL = "/api/point_values/{{name}}";
+			//var jsonURL = "http://mpinder.no-ip.biz:5000/api/point_values/28-000005d2ccb0";
+			$.getJSON(jsonURL)
+				.done(function(data) {
+					$(containerName).highcharts({
+						title: {
+							text: null
+						},
+						tooltip: {
+							crosshairs: true
+						},
+						xAxis: {
+							type: 'datetime',
+							title: {
+								text: 'Timestamp'
+							}
+						},
+						series: data
+					})
+				})
+				.fail(function() {
+					$(containerName).html("ERROR: Call to \"" + jsonURL + "\" for chart data, failed.")
+					$(containerName).css("background-color", "#FFE1E1");
+				});
         </script>
 	</head>
 
@@ -33,6 +37,6 @@
             <li><a href="../">back to list</a></li>
             <li><a href="../point/{{name}}">{{name}}</a></li>
         </ul>
-        <div id="chart_container" style="height: 400; width: 800;"></div>
+        <div id="chart_container"></div>
 	</body>
 </html>
