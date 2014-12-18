@@ -9,6 +9,9 @@
 			$.getJSON(jsonURL)
 				.done(function(data) {
 					$(containerName).highcharts({
+						chart: {
+							width: 800
+						},
 						title: {
 							text: null
 						},
