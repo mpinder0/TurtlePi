@@ -1,45 +1,200 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 	<head>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-        <script type="text/javascript" src="http://code.highcharts.com/highcharts.js"></script>
-        <script type='text/javascript'>
-			var containerName = "#chart_container";
-			var jsonURL = "/api/point_values/{{name}}";
-			//var jsonURL = "http://mpinder.no-ip.biz:5000/api/point_values/28-000005d2ccb0";
-			$.getJSON(jsonURL)
-				.done(function(data) {
-					$(containerName).highcharts({
-						chart: {
-							width: 800
-						},
-						title: {
-							text: null
-						},
-						tooltip: {
-							crosshairs: true
-						},
-						xAxis: {
-							type: 'datetime',
-							title: {
-								text: 'Timestamp'
-							}
-						},
-						series: data
-					})
-				})
-				.fail(function() {
-					$(containerName).html("ERROR: Call to \"" + jsonURL + "\" for chart data, failed.")
-					$(containerName).css("background-color", "#FFE1E1");
-				});
-        </script>
+		<title>TurtlePi Points</title>
+		<link href="../static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+		<link href="../static/datepicker/datepicker.css" rel="stylesheet">
+		<link href="../static/point_values.css" rel="stylesheet">
 	</head>
 
 	<body>
-        <h2>{{name}}</h2>
-        <ul>
-            <li><a href="../">back to list</a></li>
-            <li><a href="../point/{{name}}">{{name}}</a></li>
-        </ul>
-        <div id="chart_container"></div>
+		<div class="container">
+
+			<div class="row header">
+				<h3 class="text-muted">TurtlePi</h3>
+			</div>
+			
+			<div class="row">
+				<form class="form-inline">
+					<div class="col-sm-6">
+						<button type="button" id="timespanDay" class="btn btn-default active">Day</button>
+						<button type="button" id="timespanWeek" class="btn btn-default">Week</button>
+						<button type="button" id="timespanAll" class="btn btn-default">All</button>
+					</div>
+					<div class="col-sm-6 text-right">
+						<input type="text" id="datepick" placeholder="DD/MM/YYYY" class="form-control">
+						<button type="button" id="datepickNow" class="btn btn-default">Now</button>
+					</div>
+				</form>
+			</div>
+			
+			<div id="chart_message" class="alert alert-danger"></div>
+			<div class="row">
+				<div id="chart"></div>
+			</div>
+			
+			<div class="row">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Sensor</th>
+							<th>Display</th>
+							<th>Value</th>
+							<th>Timestamp</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td><a href="#">Sensor_Temp01</a></td>
+							<td><input type="checkbox" checked/></td>
+							<td>20&deg;C</td>
+							<td>10:00 18-Dec-14</td>
+						</tr>
+						<tr>
+							<td><a href="#">Sensor_Temp02</a></td>
+							<td><input type="checkbox" checked/></td>
+							<td>21&deg;C</td>
+							<td>09:59 18-Dec-14</td>
+						</tr>
+						<tr>
+							<td><a href="#">Sensor_Temp03</a></td>
+							<td><input type="checkbox" checked/></td>
+							<td>19&deg;C</td>
+							<td>10:05 18-Dec-14</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+
+		</div> <!-- /container -->
+
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script type="text/javascript" src="http://code.highcharts.com/highcharts.js"></script>
+		<script type="text/javascript" src="../static/datepicker/datepicker.js"></script>
+		<script type='text/javascript'>
+			var DP = $.fn.datepicker;
+			var DPGlobal =  DP.DPGlobal;
+			var chartControl = {
+				from: new Date(0),
+				days: 1,
+				setFrom: function(newDate) {
+					if(newDate instanceof Date) {
+						if(!datesAreEqual(newDate, this.from)) {
+							this.from = newDate;
+							updateChart();
+						}
+					}
+				},
+				setDays: function(newDays) {
+					if(newDays != this.days) {
+						this.days = newDays;
+						updateChart();
+					}
+				}
+			}
+			function datesAreEqual(date1, date2) {
+				date1.setHours(0,0,0,0);
+				date2.setHours(0,0,0,0);
+				return date1.valueOf() == date2.valueOf();
+			}
+			function updateTimespanSelection(which) {
+				$("#timespanDay").removeClass("active");
+				$("#timespanWeek").removeClass("active");
+				$("#timespanAll").removeClass("active");
+				
+				$("#timespan" + which).addClass("active");
+			}
+			function getMonday() {
+				d = new Date();
+				var day = d.getDay(),
+				diff = d.getDate() - day + (day == 0 ? -6:1); // adjust when day is sunday
+				return new Date(d.setDate(diff));
+			}
+			$("#timespanDay").click(function() {
+				updateTimespanSelection("Day");
+				$("#datepick").datepicker("update", new Date());
+				chartControl.setDays(1);
+			});
+			$("#timespanWeek").click(function() {
+				updateTimespanSelection("Week");
+				$("#datepick").datepicker("update", getMonday());
+				chartControl.setDays(7);
+			});
+			$("#timespanAll").click(function() {
+				updateTimespanSelection("All");
+				chartControl.setDays(0);
+			});
+			
+			$("#datepick").datepicker({
+				format: "dd/mm/yyyy",
+				autoclose: true,
+				todayHighlight: true,
+				weekStart: 1
+			});
+			$("#datepickNow").click(function() {
+				$("#datepick").datepicker("update", new Date());
+			});
+			$("#datepick").change(function() {
+				var date = DPGlobal.parseDate($("#datepick").val(), DPGlobal.parseFormat("dd/mm/yyyy"))
+				chartControl.setFrom(date);
+				
+				$("#datepickNow").removeClass("active");
+				if(datesAreEqual(date, new Date())) {
+					$("#datepickNow").addClass("active");
+				}
+			});
+			$("#datepick").datepicker("update", new Date()); // init to today
+
+			function makeTurtlePiURL(from, days) {
+				var url = "/api/point_values/{{name}}/";
+				if(!(typeof from === "undefined")) {
+					url += "?from=" + DPGlobal.formatDate(from, "dd/mm/yyyy", "en");
+					if(!(typeof days === "undefined")) {
+						url += "&days=" + days;
+					}
+				}
+				return url;
+			}
+			function drawChart(jsonURL) {
+				$("#chart_message").hide();
+			
+				$.getJSON(jsonURL)
+					.done(function(data) {
+						$("#chart").highcharts({
+							/*chart: {
+								width: 800
+							},*/
+								title: {
+								text: null
+							},
+							tooltip: {
+								crosshairs: true
+							},
+							xAxis: {
+								type: 'datetime',
+								title: {
+									text: 'Timestamp'
+								}
+							},
+							series: data
+						})
+					})
+					.fail(function() {
+						$("#chart_message").html("<strong>Error:</strong> Call to \"" + jsonURL + "\" for chart data, failed.")
+						$("#chart_message").show();
+					});
+			}
+			function updateChart() {
+				var url;
+				var days = chartControl.days;
+				var from = chartControl.from;
+				if(days > 0) {
+					url = makeTurtlePiURL(from, days);
+				} else {
+					url = makeTurtlePiURL();
+				}
+				drawChart(url);
+			}
+		</script>	
 	</body>
 </html>
