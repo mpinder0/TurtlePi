@@ -50,26 +50,37 @@ def set_point(point_name):
     return jsonify(get_dictionary_from_model(point))
 
 
-@app.route('/api/point_values/<string:point_name>', methods=['GET'])
-def get_point_value(point_name):
-    point_models = get_point_models()
-    if point_name in point_models:
-        point_model = point_models[point_name]
-    else:
-        abort(404)
+@app.route('/api/point_values', methods=['GET'])
+def get_point_value():
+    #point_models = get_point_models()
+    #if point_name in point_models:
+    #    point_model = point_models[point_name]
+    #else:
+    #    abort(404)
 
     query_from = request.args.get("from")
-    query_to = request.args.get("to")
-    query_at = request.args.get("at")
+    #query_to = request.args.get("to")
+    query_days = request.args.get("days")
+    #query_at = request.args.get("at")
 
-    if (query_from is not None) | (query_to is not None):
+    try:
+        query_from = DatetimeConverter.to_python(query_from)
+        #query_to = DatetimeConverter.to_python(query_to)
+        #query_at = DatetimeConverter.to_python(query_at)
+    except ValueError:
+        abort(400)
+
+    if (query_from is not None) and (query_days is not None):
+        query_to = query_from + timedelta(days=int(query_days), microseconds=-1)
+
+    if (query_from is not None) and (query_to is not None):
         # if "from" or "to" timestamps are present in the query string, get values from that time span.
-        results = get_values_between(point_model, query_from, query_to)
-    elif query_at is not None:
+        results = get_values_between(query_from, query_to)
+    #elif query_at is not None:
         # if "at" timestamp is present in the query string, get a single value.
-        results = get_value_at(point_model, query_at)
+    #    results = get_value_at(point_model, query_at)
     else:
-        results = get_point_values_dict(point_name)
+        results = get_all_values()
 
     if not results:
         # no objects found matching the request - 404
@@ -78,28 +89,29 @@ def get_point_value(point_name):
     return app.response_class(json.dumps(results, indent=2), mimetype='application/json')
 
 
-def get_all_values(point_model):
-    # enforce_point_limit(point_name)
-    query = point_model.select()
-    return get_charts_dict_from_query(query)
+def get_all_values():
+    results = []
+    for point_model in get_point_models().values():
+        query = point_model.select()
+        point_results = get_point_values_dict(query)
+        results.append(point_results)
+    return results
+
+
+def get_values_between(timestamp_from, timestamp_to):
+    results = []
+    point_models = get_point_models()
+    for point_model in point_models.values():
+        query = point_model.select()\
+            .where(point_model.timestamp.between(timestamp_from, timestamp_to))
+        point_results = get_point_values_dict(query)
+        results.append(point_results)
+    return results
 
 
 def get_last_value(point_model):
     query = point_model.select().limit(1)
     return get_dictionary_from_query(query)
-
-
-def get_values_between(point_model, query_from, query_to):
-    try:
-        timestamp_from = DatetimeConverter.to_python(str(query_from))
-        timestamp_to = DatetimeConverter.to_python(str(query_to))
-    except ValueError:
-        abort(400)
-
-    query = point_model.select()\
-        .where(point_model.timestamp.between(timestamp_from, timestamp_to))
-
-    return get_charts_dict_from_query(query)
 
 
 def get_value_at(point_model, query_at):
@@ -183,10 +195,7 @@ def get_point_model(point_name):
     return point_model
 
 
-def get_point_values_dict(point_name):
-    point_model = get_point_model(point_name)
-
-    query = point_model.select().order_by(point_model.timestamp)
+def get_point_values_dict(query):
     results = get_dictionary_from_query(query)
 
     datapoints = []
@@ -199,8 +208,8 @@ def get_point_values_dict(point_name):
         datapoints.append(datapoint)
 
     point_dict = {
-        'name': point_name,
+        'name': query.model_class._meta.db_table,
         'data': datapoints
 
     }
-    return [point_dict]
+    return point_dict

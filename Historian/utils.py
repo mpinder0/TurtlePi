@@ -42,7 +42,7 @@ def get_dictionary_from_query(query):
         dictionary[i] = get_dictionary_from_model(value)
     return dictionary
 
-
+"""
 def get_charts_dict_from_query(query):
     results = get_dictionary_from_query(query)
     charts_dict = {
@@ -66,7 +66,7 @@ def get_charts_dict_from_query(query):
 
     charts_dict['rows'] = rows
     return charts_dict
-
+"""
 
 def get_model_from_dictionary(model, field_dict):
     if isinstance(model, Model):
@@ -102,7 +102,14 @@ class DatetimeConverter(object):
 
     @classmethod
     def to_python(cls, value):
-        return datetime.strptime(value, cls.datetime_format)
+        if value is not None:
+            value = str(value)
+            if ' ' in value:
+                return datetime.strptime(value, cls.datetime_format)
+            else:
+                return datetime.strptime(value, cls.date_format)
+        else:
+            return None
 
     @classmethod
     def to_url(cls, value):

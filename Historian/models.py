@@ -73,10 +73,3 @@ def add_point(point_name):
         point.save(force_insert=True)
         # new model for point values
         return create_point_model(point_name)
-
-
-"""
-def create_tables():
-    database.connect()
-    database.create_tables([Point, PointValue], safe=True)
-"""

@@ -5,7 +5,7 @@ Define web views for flask to handle
 from flask import request, render_template
 
 from app import app
-from models import Point, PointValue
+from models import *
 from utils import *
 
 
@@ -32,6 +32,6 @@ def point(point_name):
     return render_template('point.html', message=message, **point_dict)
 
 
-@app.route('/point_values/<string:point_name>', methods=['GET'])
-def point_values(point_name):
-    return render_template('point_values.html', name=point_name)
+@app.route('/point_values', methods=['GET'])
+def point_values():
+    return render_template('point_values.html', points=get_point_models().keys())

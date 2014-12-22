@@ -44,24 +44,14 @@
 						</tr>
 					</thead>
 					<tbody>
+                        {% for point_name in points %}
 						<tr>
-							<td><a href="#">Sensor_Temp01</a></td>
-							<td><input type="checkbox" checked/></td>
+							<td><a href="#">{{point_name}}</a></td>
+							<td><input type="checkbox" id="cb{{point_name}}" checked/></td>
 							<td>20&deg;C</td>
 							<td>10:00 18-Dec-14</td>
 						</tr>
-						<tr>
-							<td><a href="#">Sensor_Temp02</a></td>
-							<td><input type="checkbox" checked/></td>
-							<td>21&deg;C</td>
-							<td>09:59 18-Dec-14</td>
-						</tr>
-						<tr>
-							<td><a href="#">Sensor_Temp03</a></td>
-							<td><input type="checkbox" checked/></td>
-							<td>19&deg;C</td>
-							<td>10:05 18-Dec-14</td>
-						</tr>
+                        {% endfor %}
 					</tbody>
 				</table>
 			</div>
@@ -146,9 +136,9 @@
 			$("#datepick").datepicker("update", new Date()); // init to today
 
 			function makeTurtlePiURL(from, days) {
-				var url = "/api/point_values/{{name}}/";
+				var url = "/api/point_values";
 				if(!(typeof from === "undefined")) {
-					url += "?from=" + DPGlobal.formatDate(from, "dd/mm/yyyy", "en");
+					url += "?from=" + DPGlobal.formatDate(from, "yyyy-mm-dd", "en");
 					if(!(typeof days === "undefined")) {
 						url += "&days=" + days;
 					}
@@ -164,8 +154,11 @@
 							/*chart: {
 								width: 800
 							},*/
-								title: {
+							title: {
 								text: null
+							},
+							legend: {
+							    enabled: false
 							},
 							tooltip: {
 								crosshairs: true
@@ -195,6 +188,15 @@
 				}
 				drawChart(url);
 			}
+
+            $("#cb28-000005d3a073").change(function() {
+                var series = $("#chart").highcharts().series[0];
+                if($(this).is(":checked")) {
+                    series.show();
+                } else {
+                    series.hide();
+                }
+            });
 		</script>	
 	</body>
 </html>
