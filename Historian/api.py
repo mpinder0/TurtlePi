@@ -51,36 +51,21 @@ def set_point(point_name):
 
 
 @app.route('/api/point_values', methods=['GET'])
-def get_point_value():
-    #point_models = get_point_models()
-    #if point_name in point_models:
-    #    point_model = point_models[point_name]
-    #else:
-    #    abort(404)
-
+def view_point_values():
     query_from = request.args.get("from")
-    #query_to = request.args.get("to")
     query_days = request.args.get("days")
-    #query_at = request.args.get("at")
-
-    try:
-        query_from = DatetimeConverter.to_python(query_from)
-        #query_to = DatetimeConverter.to_python(query_to)
-        #query_at = DatetimeConverter.to_python(query_at)
-    except ValueError:
-        abort(400)
 
     if (query_from is not None) and (query_days is not None):
-        query_to = query_from + timedelta(days=int(query_days), microseconds=-1)
-
-    if (query_from is not None) and (query_to is not None):
         # if "from" or "to" timestamps are present in the query string, get values from that time span.
-        results = get_values_between(query_from, query_to)
-    #elif query_at is not None:
-        # if "at" timestamp is present in the query string, get a single value.
-    #    results = get_value_at(point_model, query_at)
+        try:
+            timestamp_start = DatetimeConverter.to_python(query_from)
+            days = int(query_days)
+        except (ValueError, TypeError):
+            abort(400)
+
+        results = get_all_points_value_range(timestamp_start, days)
     else:
-        results = get_all_values()
+        results = get_all_points_all_values()
 
     if not results:
         # no objects found matching the request - 404
@@ -89,7 +74,7 @@ def get_point_value():
     return app.response_class(json.dumps(results, indent=2), mimetype='application/json')
 
 
-def get_all_values():
+def get_all_points_all_values():
     results = []
     for point_model in get_point_value_models().values():
         query = point_model.select()
@@ -98,9 +83,12 @@ def get_all_values():
     return results
 
 
-def get_values_between(timestamp_from, timestamp_to):
+def get_all_points_value_range(timestamp_from, length_days):
     results = []
     point_models = get_point_value_models()
+
+    timestamp_to = timestamp_from + timedelta(days=length_days, microseconds=-1)
+
     for point_model in point_models.values():
         query = point_model.select()\
             .where(point_model.timestamp.between(timestamp_from, timestamp_to))
@@ -111,20 +99,6 @@ def get_values_between(timestamp_from, timestamp_to):
 
 def get_last_value(pv_model):
     query = pv_model.select().order_by(pv_model.timestamp.desc()).limit(1)
-    return get_results_from_query(query)
-
-
-def get_value_at(pv_model, query_at):
-    try:
-        timestamp_at = DatetimeConverter.to_python(str(query_at))
-    except ValueError:
-        abort(400)
-
-    span = timedelta(microseconds=999999)
-    query = pv_model.select()\
-        .where(pv_model.timestamp.between(timestamp_at, timestamp_at + span))\
-        .limit(1)
-
     return get_results_from_query(query)
 
 
@@ -179,21 +153,25 @@ def enforce_point_limit(point_name):
                 .where(pv_model.timestamp < cut_off)\
                 .execute()
 
+
 def get_point_values_dict(query):
     results = get_results_from_query(query)
 
-    datapoints = []
-    for point_value in results:
-        timestamp = point_value['timestamp']
-        datapoint = [
-            int(timestamp.strftime("%s"))*1000,
-            point_value['value']
-        ]
-        datapoints.append(datapoint)
+    if len(results) == 0:
+        datapoints = []
+        for point_value in results:
+            timestamp = point_value['timestamp']
+            datapoint = [
+                int(timestamp.strftime("%s"))*1000,
+                point_value['value']
+            ]
+            datapoints.append(datapoint)
 
-    point_dict = {
-        'name': query.model_class._meta.db_table,
-        'data': datapoints
+        point_dict = {
+            'name': query.model_class._meta.db_table,
+            'data': datapoints
 
-    }
-    return point_dict
+        }
+        return point_dict
+    else:
+        return {}

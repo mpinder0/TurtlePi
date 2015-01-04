@@ -8,6 +8,7 @@ from app import app
 from models import *
 from utils import *
 
+
 @app.route('/point/<string:point_name>', methods=['GET', 'POST'])
 def point(point_name):
     p = get_object_or_404(Point, Point.name == point_name)

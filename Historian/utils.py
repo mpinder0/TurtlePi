@@ -45,7 +45,8 @@ def get_results_from_query(query):
     if len(results) > 0:
         return results[0]
     else:
-        return None
+        return []
+
 
 def get_model_from_dictionary(model, field_dict):
     if isinstance(model, Model):
