@@ -42,11 +42,7 @@ def get_results_from_query(query):
     for value in query:
         results.append(get_dictionary_from_model(value))
 
-    if len(results) > 0:
-        return results[0]
-    else:
-        return []
-
+    return results
 
 def get_model_from_dictionary(model, field_dict):
     if isinstance(model, Model):

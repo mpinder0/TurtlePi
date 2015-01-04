@@ -99,7 +99,7 @@ def get_all_points_value_range(timestamp_from, length_days):
 
 def get_last_value(pv_model):
     query = pv_model.select().order_by(pv_model.timestamp.desc()).limit(1)
-    return get_results_from_query(query)
+    return get_results_from_query(query)[0]
 
 
 @app.route('/api/point_value/<string:point_name>/<float:value>', methods=['POST'])
@@ -157,7 +157,7 @@ def enforce_point_limit(point_name):
 def get_point_values_dict(query):
     results = get_results_from_query(query)
 
-    if len(results) == 0:
+    if len(results) > 0:
         datapoints = []
         for point_value in results:
             timestamp = point_value['timestamp']
