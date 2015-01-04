@@ -42,7 +42,7 @@ class PointValue(BaseModel):
 
     class Meta:
         # primary_key = CompositeKey('point', 'timestamp')
-        order_by = ('-timestamp',)
+        order_by = ('timestamp',)
 
 
 def point_model_factory(name):
@@ -51,13 +51,23 @@ def point_model_factory(name):
     return new_class
 
 
-def get_point_models():
+def get_point_value_models():
     Point.create_table(fail_silently=True)
     point_models = {}
     query = Point.select()
     for point in query:
         point_models[point.name] = create_point_model(point.name)
     return point_models
+
+
+def get_point_value_model(point_name, create=False):
+    point_models = get_point_value_models()
+    if point_name in point_models:
+        return point_models[point_name]
+    elif create:
+        return add_point(point_name)
+    else:
+        return None
 
 
 def create_point_model(point_name):

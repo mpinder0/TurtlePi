@@ -91,7 +91,7 @@ def get_point_value():
 
 def get_all_values():
     results = []
-    for point_model in get_point_models().values():
+    for point_model in get_point_value_models().values():
         query = point_model.select()
         point_results = get_point_values_dict(query)
         results.append(point_results)
@@ -100,7 +100,7 @@ def get_all_values():
 
 def get_values_between(timestamp_from, timestamp_to):
     results = []
-    point_models = get_point_models()
+    point_models = get_point_value_models()
     for point_model in point_models.values():
         query = point_model.select()\
             .where(point_model.timestamp.between(timestamp_from, timestamp_to))
@@ -109,35 +109,31 @@ def get_values_between(timestamp_from, timestamp_to):
     return results
 
 
-def get_last_value(point_model):
-    query = point_model.select().limit(1)
-    return get_dictionary_from_query(query)
+def get_last_value(pv_model):
+    query = pv_model.select().order_by(pv_model.timestamp.desc()).limit(1)
+    return get_results_from_query(query)
 
 
-def get_value_at(point_model, query_at):
+def get_value_at(pv_model, query_at):
     try:
         timestamp_at = DatetimeConverter.to_python(str(query_at))
     except ValueError:
         abort(400)
 
     span = timedelta(microseconds=999999)
-    query = point_model.select()\
-        .where(point_model.timestamp.between(timestamp_at, timestamp_at + span))\
+    query = pv_model.select()\
+        .where(pv_model.timestamp.between(timestamp_at, timestamp_at + span))\
         .limit(1)
 
-    return get_dictionary_from_query(query)
+    return get_results_from_query(query)
 
 
 @app.route('/api/point_value/<string:point_name>/<float:value>', methods=['POST'])
 def set_point_value(point_name, value):
-    models = get_point_models()
-    if point_name in models:
-        point_model = models[point_name]
-    else:
-        point_model = add_point(point_name)
+    pv_model = get_point_value_model(point_name, create=True)
 
     enforce_point_limit(point_name)
-    new_value = point_model()
+    new_value = pv_model()
     new_value.value = value
     value_dict = get_dictionary_from_model(new_value)
 
@@ -154,56 +150,44 @@ def value_filter_pass(point_name, value):
     point = Point.get(Point.name == point_name)
     if point.filter_type == 1:
         # fixed hysteresis
-        try:
-            last_value = get_point_models()[point_name].get().value
-        except DoesNotExist:
-            return True
-
-        value_lower = last_value - point.filter_value
-        value_upper = last_value + point.filter_value
-        if (value <= value_lower) | (value >= value_upper):
+        pv_model = get_point_value_model(point_name)
+        last_point_value = get_last_value(pv_model)
+        if last_point_value is None:
             return True
         else:
-            return False
+            last_value = last_point_value['value']
+            value_lower = last_value - point.filter_value
+            value_upper = last_value + point.filter_value
+            if (value <= value_lower) | (value >= value_upper):
+                return True
+            else:
+                return False
     else:
         return True
 
 
 def enforce_point_limit(point_name):
-    try:
+    pv_model = get_point_value_model(point_name)
+    if pv_model is not None:
         point = Point.get(Point.name == point_name)
-    except DoesNotExist:
-        abort(500)
 
-    point_model = get_point_models()[point_name]
+        if point.limit_hours > 0:
+            limit_hours = timedelta(hours=point.limit_hours)
+            cut_off = datetime.now() - limit_hours
 
-    if point.limit_hours > 0:
-        limit_hours = timedelta(hours=point.limit_hours)
-        cut_off = datetime.now() - limit_hours
-
-        point_model.delete()\
-            .where(point_model.timestamp < cut_off)\
-            .execute()
-
-
-def get_point_model(point_name):
-    point_models = get_point_models()
-    if point_name in point_models:
-        point_model = point_models[point_name]
-    else:
-        abort(404)
-    return point_model
-
+            pv_model.delete()\
+                .where(pv_model.timestamp < cut_off)\
+                .execute()
 
 def get_point_values_dict(query):
-    results = get_dictionary_from_query(query)
+    results = get_results_from_query(query)
 
     datapoints = []
-    for point_value in results.items():
-        timestamp = point_value[1]['timestamp']
+    for point_value in results:
+        timestamp = point_value['timestamp']
         datapoint = [
             int(timestamp.strftime("%s"))*1000,
-            point_value[1]['value']
+            point_value['value']
         ]
         datapoints.append(datapoint)
 

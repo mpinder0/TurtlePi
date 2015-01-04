@@ -8,13 +8,6 @@ from app import app
 from models import *
 from utils import *
 
-
-@app.route('/')
-def test_page():
-    points = Point.select(Point.name)
-    return render_template('index.html', points=points)
-
-
 @app.route('/point/<string:point_name>', methods=['GET', 'POST'])
 def point(point_name):
     p = get_object_or_404(Point, Point.name == point_name)
@@ -32,6 +25,6 @@ def point(point_name):
     return render_template('point.html', message=message, **point_dict)
 
 
-@app.route('/point_values', methods=['GET'])
+@app.route('/', methods=['GET'])
 def point_values():
-    return render_template('point_values.html', points=get_point_models().keys())
+    return render_template('point_values.html', points=get_point_value_models().keys())

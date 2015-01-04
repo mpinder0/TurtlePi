@@ -5,6 +5,7 @@ from peewee import ForeignKeyField
 from flask import abort
 from datetime import datetime
 
+
 def get_object_or_404(query_or_model, *query):
     if not isinstance(query_or_model, SelectQuery):
         query_or_model = query_or_model.select()
@@ -36,37 +37,15 @@ def get_dictionary_from_model(model, fields=None, exclude=None):
     return data
 
 
-def get_dictionary_from_query(query):
-    dictionary = {}
-    for i, value in enumerate(query):
-        dictionary[i] = get_dictionary_from_model(value)
-    return dictionary
+def get_results_from_query(query):
+    results = []
+    for value in query:
+        results.append(get_dictionary_from_model(value))
 
-"""
-def get_charts_dict_from_query(query):
-    results = get_dictionary_from_query(query)
-    charts_dict = {
-        'cols': [
-            {'label': 'Timestamp', 'type': 'datetime'},
-            {'label': 'Value', 'type': 'number'}
-        ]
-    }
-
-    rows = []
-    for point_value in results.items():
-        timestamp = point_value[1]['timestamp']
-        timestamp_string = "Date({0}, {1}, {2}, {3}, {4}, {5})".format(timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute, timestamp.second)
-        row = {
-            'c': [
-                {'v': timestamp_string},
-                {'v': point_value[1]['value']}
-            ]
-        }
-        rows.append(row)
-
-    charts_dict['rows'] = rows
-    return charts_dict
-"""
+    if len(results) > 0:
+        return results[0]
+    else:
+        return None
 
 def get_model_from_dictionary(model, field_dict):
     if isinstance(model, Model):

@@ -189,12 +189,21 @@
 				drawChart(url);
 			}
 
-            $("#cb28-000005d3a073").change(function() {
-                var series = $("#chart").highcharts().series[0];
-                if($(this).is(":checked")) {
-                    series.show();
-                } else {
-                    series.hide();
+            $("#cbtemperature1").change(function() {
+                var chart = $("#chart").highcharts();
+                var series = null;
+                for (var i = 0; i < chart.series.length; i++) {
+                    if(chart.series[i].name == "temperature1") {
+                        series = chart.series[i];
+                        break;
+                    }
+                }
+                if(series != null) {
+                    if($(this).is(":checked")) {
+                        series.show();
+                    } else {
+                        series.hide();
+                    }
                 }
             });
 		</script>	
