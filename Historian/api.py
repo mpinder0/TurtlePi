@@ -17,8 +17,12 @@ from utils import *
 @app.route('/api/point/<string:point_name>', methods=['GET'])
 def get_point(point_name):
     point = get_object_or_404(Point, Point.name == point_name)
-    dictionary = get_dictionary_from_model(point)
-    return jsonify(dictionary)
+    point_data = get_dictionary_from_model(point)
+
+    last_value_data = get_last_value(get_point_value_model(point_name))
+
+    data = dict(point_data.items() + last_value_data.items())
+    return jsonify(data)
 
 
 @app.route('/api/point/<string:point_name>', methods=['POST'])
