@@ -24,6 +24,7 @@ class Point(BaseModel):
     filter_type = IntegerField(default=0)
     filter_value = FloatField(default=0)
     limit_hours = IntegerField(default=0)
+    units = CharField()
 
     def __str__(self):
         return "%s" % (self.name,)

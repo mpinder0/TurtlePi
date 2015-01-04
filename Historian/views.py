@@ -18,6 +18,7 @@ def point(point_name):
             p.filter_type = int(request.form['filter_type'])
             p.filter_value = float(request.form['filter_value'])
             p.limit_hours = int(request.form['limit_hours'])
+            p.units = request.form['units']
             p.save()
             message = "Submit ok."
         except (TypeError, ValueError):
