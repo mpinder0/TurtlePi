@@ -87,11 +87,13 @@ def get_all_points_all_values():
     return results
 
 
-def get_all_points_value_range(timestamp_from, length_days):
+def get_all_points_value_range(date_from, length_days):
     results = []
     point_models = get_point_value_models()
 
-    timestamp_to = timestamp_from + timedelta(days=length_days, microseconds=-1)
+    length_days -= 1
+    timestamp_from = date_from - timedelta(days=length_days)
+    timestamp_to = date_from + timedelta(days=1, microseconds=-1)
 
     for point_model in point_models.values():
         query = point_model.select()\

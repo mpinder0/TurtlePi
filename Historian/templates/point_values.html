@@ -34,7 +34,7 @@
 			</div>
 			
 			<div class="row">
-				<table class="table">
+				<table id="legend" class="table">
 					<thead>
 						<tr>
 							<th>Sensor</th>
@@ -44,14 +44,6 @@
 						</tr>
 					</thead>
 					<tbody>
-                        {% for point_name in points %}
-						<tr>
-							<td><a href="point/{{point_name}}">{{point_name}}</a></td>
-							<td><input type="checkbox" id="cb{{point_name}}" checked/></td>
-							<td>20&deg;C</td>
-							<td>10:00 18-Dec-14</td>
-						</tr>
-                        {% endfor %}
 					</tbody>
 				</table>
 			</div>
@@ -61,93 +53,13 @@
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 		<script type="text/javascript" src="http://code.highcharts.com/highcharts.js"></script>
 		<script type="text/javascript" src="../static/datepicker/datepicker.js"></script>
-		<script type='text/javascript'>
+        <script type='text/javascript'>
 			var DP = $.fn.datepicker;
 			var DPGlobal =  DP.DPGlobal;
-			var chartControl = {
-				from: new Date(0),
-				days: 1,
-				setFrom: function(newDate) {
-					if(newDate instanceof Date) {
-						if(!datesAreEqual(newDate, this.from)) {
-							this.from = newDate;
-							updateChart();
-						}
-					}
-				},
-				setDays: function(newDays) {
-					if(newDays != this.days) {
-						this.days = newDays;
-						updateChart();
-					}
-				}
-			}
-			function datesAreEqual(date1, date2) {
-				date1.setHours(0,0,0,0);
-				date2.setHours(0,0,0,0);
-				return date1.valueOf() == date2.valueOf();
-			}
-			function updateTimespanSelection(which) {
-				$("#timespanDay").removeClass("active");
-				$("#timespanWeek").removeClass("active");
-				$("#timespanAll").removeClass("active");
-				
-				$("#timespan" + which).addClass("active");
-			}
-			function getMonday() {
-				d = new Date();
-				var day = d.getDay(),
-				diff = d.getDate() - day + (day == 0 ? -6:1); // adjust when day is sunday
-				return new Date(d.setDate(diff));
-			}
-			$("#timespanDay").click(function() {
-				updateTimespanSelection("Day");
-				$("#datepick").datepicker("update", new Date());
-				chartControl.setDays(1);
-			});
-			$("#timespanWeek").click(function() {
-				updateTimespanSelection("Week");
-				$("#datepick").datepicker("update", getMonday());
-				chartControl.setDays(7);
-			});
-			$("#timespanAll").click(function() {
-				updateTimespanSelection("All");
-				chartControl.setDays(0);
-			});
-			
-			$("#datepick").datepicker({
-				format: "dd/mm/yyyy",
-				autoclose: true,
-				todayHighlight: true,
-				weekStart: 1
-			});
-			$("#datepickNow").click(function() {
-				$("#datepick").datepicker("update", new Date());
-			});
-			$("#datepick").change(function() {
-				var date = DPGlobal.parseDate($("#datepick").val(), DPGlobal.parseFormat("dd/mm/yyyy"))
-				chartControl.setFrom(date);
-				
-				$("#datepickNow").removeClass("active");
-				if(datesAreEqual(date, new Date())) {
-					$("#datepickNow").addClass("active");
-				}
-			});
-			$("#datepick").datepicker("update", new Date()); // init to today
 
-			function makeTurtlePiURL(from, days) {
-				var url = "/api/point_values";
-				if(!(typeof from === "undefined")) {
-					url += "?from=" + DPGlobal.formatDate(from, "yyyy-mm-dd", "en");
-					if(!(typeof days === "undefined")) {
-						url += "&days=" + days;
-					}
-				}
-				return url;
-			}
 			function drawChart(jsonURL) {
 				$("#chart_message").hide();
-			
+
 				$.getJSON(jsonURL)
 					.done(function(data) {
 						$("#chart").highcharts({
@@ -170,7 +82,8 @@
 								}
 							},
 							series: data
-						})
+						});
+						buildLegend(data);
 					})
 					.fail(function() {
 						$("#chart_message").html("<strong>Error:</strong> Call to \"" + jsonURL + "\" for chart data, failed.")
@@ -179,8 +92,8 @@
 			}
 			function updateChart() {
 				var url;
-				var days = chartControl.days;
-				var from = chartControl.from;
+				var days = chartTimespan.days;
+				var from = chartTimespan.from;
 				if(days > 0) {
 					url = makeTurtlePiURL(from, days);
 				} else {
@@ -189,23 +102,145 @@
 				drawChart(url);
 			}
 
-            $("#cbtemperature1").change(function() {
-                var chart = $("#chart").highcharts();
-                var series = null;
-                for (var i = 0; i < chart.series.length; i++) {
-                    if(chart.series[i].name == "temperature1") {
-                        series = chart.series[i];
-                        break;
-                    }
+			var chartTimespan = {
+				from: new Date(0),
+				days: 1,
+				setFrom: function(newDate) {
+					if(newDate instanceof Date) {
+						if(!datesAreEqual(newDate, this.from)) {
+							this.from = newDate;
+							$("#datepick").datepicker("update", newDate);
+							updateChart();
+						}
+					}
+				},
+				setDays: function(newDays) {
+					if(newDays != this.days) {
+						this.days = newDays;
+						updateChart();
+					}
+				}
+			}
+
+            function datesAreEqual(date1, date2) {
+				date1.setHours(0,0,0,0);
+				date2.setHours(0,0,0,0);
+				return date1.valueOf() == date2.valueOf();
+			}
+			function updateTimespanSelection(which) {
+				$("#timespanDay").removeClass("active");
+				$("#timespanWeek").removeClass("active");
+				$("#timespanAll").removeClass("active");
+
+				$("#timespan" + which).addClass("active");
+			}
+			//function getMonday() {
+			//	d = new Date();
+			//	var day = d.getDay(),
+			//	diff = d.getDate() - day + (day == 0 ? -6:1); // adjust when day is sunday
+			//	return new Date(d.setDate(diff));
+			//}
+
+			$("#timespanDay").click(function() {
+				updateTimespanSelection("Day");
+				chartTimespan.setFrom(new Date());
+				chartTimespan.setDays(1);
+			});
+			$("#timespanWeek").click(function() {
+				updateTimespanSelection("Week");
+				//chartTimespan.setFrom(getMonday());
+				chartTimespan.setDays(7);
+			});
+			$("#timespanAll").click(function() {
+				updateTimespanSelection("All");
+				chartTimespan.setDays(0);
+			});
+
+			$("#datepick").datepicker({
+				format: "dd/mm/yyyy",
+				autoclose: true,
+				todayHighlight: true,
+				weekStart: 1
+			});
+			$("#datepickNow").click(function() {
+				$("#datepick").datepicker("update", new Date());
+			});
+			$("#datepick").change(function() {
+				var date = DPGlobal.parseDate($("#datepick").val(), DPGlobal.parseFormat("dd/mm/yyyy"))
+				chartTimespan.setFrom(date);
+
+				$("#datepickNow").removeClass("active");
+				if(datesAreEqual(date, new Date())) {
+					$("#datepickNow").addClass("active");
+				}
+			});
+			$("#datepick").datepicker("update", new Date()); // init to today
+
+			function makeTurtlePiURL(from, days) {
+				var url = "/api/point_values";
+				if(!(typeof from === "undefined")) {
+					url += "?from=" + DPGlobal.formatDate(from, "yyyy-mm-dd", "en");
+					if(!(typeof days === "undefined")) {
+						url += "&days=" + days;
+					}
+				}
+				return url;
+			}
+
+            //$         ("#cbtemperature1").change(function() {
+            //    var chart = $("#chart").highcharts();
+            //    var series = null;
+            //    for (var i = 0; i < chart.series.length; i++) {
+            //        if(chart.series[i].name == "temperature1") {
+            //            series = chart.series[i];
+            //            break;
+            //        }
+            //    }
+            //    if(series != null) {
+            //        if($(this).is(":checked")) {
+            //            series.show();
+            //        } else {
+            //            series.hide();
+            //        }
+            //    }
+            //});
+
+            function buildLegend(chartData) {
+                tBody = $("#legend").find("tbody");
+                tBody.empty();
+
+                for(var i = 0; i < chartData.length; i++) {
+                    pointName = chartData[i]["name"];
+                    checkbox = $(document.createElement("input")).attr({
+                        value: i,
+                        type: "checkbox",
+                        checked: true
+                    });
+
+                    checkbox.change(function() {
+                        var chart = $("#chart").highcharts();
+                        var series = chart.series[this.value];
+                        if($(this).is(":checked")) {
+                            series.show();
+                        } else {
+                            series.hide();
+                        }
+                    });
+
+                    tBody.append("<tr>");
+                    tBody.append("<td><a href=\"point/" + pointName + "\">" + pointName + "</a></td>");
+                    tBody.append($("<td>").append(checkbox));
+                    tBody.append("<td id=\"val-" + pointName + "\"></td>");
+                    tBody.append("<td id=\"ts-" + pointName + "\"></td>");
+                    tBody.append("</tr>");
+
+                    $.getJSON("/api/point/" + pointName)
+                        .done(function(data) {
+                            $("#val-" + data["name"]).text(data["value"]);
+                            $("#ts-" + data["name"]).text(data["timestamp"]);
+                        });
                 }
-                if(series != null) {
-                    if($(this).is(":checked")) {
-                        series.show();
-                    } else {
-                        series.hide();
-                    }
-                }
-            });
-		</script>	
+            }
+		</script>
 	</body>
 </html>
