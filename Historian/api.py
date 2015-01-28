@@ -2,7 +2,7 @@
 Define REST API routes and methods for flask to handle
 """
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from flask import jsonify
 from flask import request
@@ -80,9 +80,13 @@ def view_point_values():
 
 def get_all_points_all_values():
     results = []
-    for point_model in get_point_value_models().values():
+    for point_name, point_model in get_point_value_models().iteritems():
         query = point_model.select()
         point_results = get_point_values_dict(query)
+
+        units = Point.get(Point.name == point_name).units
+        point_results["units"] = units
+
         results.append(point_results)
     return results
 
@@ -95,11 +99,15 @@ def get_all_points_value_range(date_from, length_days):
     timestamp_from = date_from - timedelta(days=length_days)
     timestamp_to = date_from + timedelta(days=1, microseconds=-1)
 
-    for point_model in point_models.values():
-        query = point_model.select()\
+    for point_name, point_model in point_models.iteritems():
+        pv_query = point_model.select()\
             .where(point_model.timestamp.between(timestamp_from, timestamp_to))
-        point_results = get_point_values_dict(query)
-        results.append(point_results)
+        pv_results = get_point_values_dict(pv_query)
+
+        units = Point.get(Point.name == point_name).units
+        pv_results["units"] = units
+
+        results.append(pv_results)
     return results
 
 
@@ -167,8 +175,9 @@ def get_point_values_dict(query):
         datapoints = []
         for point_value in results:
             timestamp = point_value['timestamp']
+            seconds_since_epoch = (timestamp - datetime(1970,1,1)).total_seconds()
             datapoint = [
-                int(timestamp.strftime("%s"))*1000,
+                seconds_since_epoch*1000,
                 point_value['value']
             ]
             datapoints.append(datapoint)

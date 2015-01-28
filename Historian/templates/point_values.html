@@ -57,51 +57,6 @@
 			var DP = $.fn.datepicker;
 			var DPGlobal =  DP.DPGlobal;
 
-			function drawChart(jsonURL) {
-				$("#chart_message").hide();
-
-				$.getJSON(jsonURL)
-					.done(function(data) {
-						$("#chart").highcharts({
-							/*chart: {
-								width: 800
-							},*/
-							title: {
-								text: null
-							},
-							legend: {
-							    enabled: false
-							},
-							tooltip: {
-								crosshairs: true
-							},
-							xAxis: {
-								type: 'datetime',
-								title: {
-									text: 'Timestamp'
-								}
-							},
-							series: data
-						});
-						buildLegend(data);
-					})
-					.fail(function() {
-						$("#chart_message").html("<strong>Error:</strong> Call to \"" + jsonURL + "\" for chart data, failed.")
-						$("#chart_message").show();
-					});
-			}
-			function updateChart() {
-				var url;
-				var days = chartTimespan.days;
-				var from = chartTimespan.from;
-				if(days > 0) {
-					url = makeTurtlePiURL(from, days);
-				} else {
-					url = makeTurtlePiURL();
-				}
-				drawChart(url);
-			}
-
 			var chartTimespan = {
 				from: new Date(0),
 				days: 1,
@@ -185,6 +140,73 @@
 					}
 				}
 				return url;
+			}
+
+			function drawChart(jsonURL) {
+				$("#chart_message").hide();
+
+				$.getJSON(jsonURL)
+					.done(function(data) {
+                        // make unique list of units
+                        var units = [];
+                        var yAxis = [];
+                        for(var i = 0; i < data.length; i++) {
+
+                            // get series units
+                            var uom = data[i]["units"];
+
+                            // check if yAxis exists for units
+                            var uom_index = units.indexOf(uom);
+                            if(uom_index == -1) {
+                                // doesn't already exist, create new yAxis
+                                uom_index = units.length;
+                                units[uom_index] = uom;
+                                yAxis[uom_index] = { title: { text: "Values ( " + uom + " )" }};
+                            }
+
+                            // assign series to it's yAxis
+                            data[i]["yAxis"] = uom_index;
+                            data[i]["tooltip"] = { valueSuffix: " " + uom };
+                        }
+
+						$("#chart").highcharts({
+						    chart: {
+						        zoomType: "x"
+						    },
+							title: {
+								text: null
+							},
+							legend: {
+							    enabled: false
+							},
+							tooltip: {
+								crosshairs: true
+							},
+							xAxis: {
+								type: 'datetime',
+								title: {
+									text: 'Timestamp'
+								}
+							},
+							yAxis: yAxis,
+							series: data
+						});
+					})
+					.fail(function() {
+						$("#chart_message").html("<strong>Error:</strong> Call to \"" + jsonURL + "\" for chart data, failed.")
+						$("#chart_message").show();
+					});
+			}
+			function updateChart() {
+				var url;
+				var days = chartControl.days;
+				var from = chartControl.from;
+				if(days > 0) {
+					url = makeTurtlePiURL(from, days);
+				} else {
+					url = makeTurtlePiURL();
+				}
+				drawChart(url);
 			}
 
             //$         ("#cbtemperature1").change(function() {
