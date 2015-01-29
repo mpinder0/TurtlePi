@@ -92,12 +92,10 @@
 
 			$("#timespanDay").click(function() {
 				updateTimespanSelection("Day");
-				chartTimespan.setFrom(new Date());
 				chartTimespan.setDays(1);
 			});
 			$("#timespanWeek").click(function() {
 				updateTimespanSelection("Week");
-				//chartTimespan.setFrom(getMonday());
 				chartTimespan.setDays(7);
 			});
 			$("#timespanAll").click(function() {
