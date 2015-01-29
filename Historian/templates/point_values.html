@@ -89,12 +89,6 @@
 
 				$("#timespan" + which).addClass("active");
 			}
-			//function getMonday() {
-			//	d = new Date();
-			//	var day = d.getDay(),
-			//	diff = d.getDate() - day + (day == 0 ? -6:1); // adjust when day is sunday
-			//	return new Date(d.setDate(diff));
-			//}
 
 			$("#timespanDay").click(function() {
 				updateTimespanSelection("Day");
@@ -191,6 +185,8 @@
 							yAxis: yAxis,
 							series: data
 						});
+
+						buildLegend(data);
 					})
 					.fail(function() {
 						$("#chart_message").html("<strong>Error:</strong> Call to \"" + jsonURL + "\" for chart data, failed.")
@@ -199,8 +195,8 @@
 			}
 			function updateChart() {
 				var url;
-				var days = chartControl.days;
-				var from = chartControl.from;
+				var days = chartTimespan.days;
+				var from = chartTimespan.from;
 				if(days > 0) {
 					url = makeTurtlePiURL(from, days);
 				} else {
@@ -208,24 +204,6 @@
 				}
 				drawChart(url);
 			}
-
-            //$         ("#cbtemperature1").change(function() {
-            //    var chart = $("#chart").highcharts();
-            //    var series = null;
-            //    for (var i = 0; i < chart.series.length; i++) {
-            //        if(chart.series[i].name == "temperature1") {
-            //            series = chart.series[i];
-            //            break;
-            //        }
-            //    }
-            //    if(series != null) {
-            //        if($(this).is(":checked")) {
-            //            series.show();
-            //        } else {
-            //            series.hide();
-            //        }
-            //    }
-            //});
 
             function buildLegend(chartData) {
                 tBody = $("#legend").find("tbody");
