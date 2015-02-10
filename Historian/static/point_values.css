@@ -27,6 +27,14 @@ body {
 	display: inline;
 }
 
+.legend-colour {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    margin-right: 10px;
+    border-radius: 3px;
+}
+
 /* Customize container */
 @media (min-width: 768px) {
   .container {

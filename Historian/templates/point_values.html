@@ -40,9 +40,8 @@
 				<table id="legend" class="table">
 					<thead>
 						<tr>
-                            <th></th>
+                            <th>Show</th>
 							<th>Sensor</th>
-							<th>Display</th>
 							<th>Value</th>
 							<th>Timestamp</th>
 						</tr>
@@ -231,10 +230,13 @@
                         }
                     });
 
-                    var row = $("<tr>")
-                    row.append("<td><span class=\"label\" style=\"background-color:"+ colours[i] +"\">&nbsp;</div></td>");
+                    var row = $("<tr>");
+                    var tdShow = $("<td>")
+                    tdShow.append("<div class=\" legend-colour\" style=\"background-color:"+ colours[i] +"\"></div>");
+                    tdShow.append(checkbox);
+                    row.append(tdShow);
                     row.append("<td><a href=\"point/" + pointName + "\">" + pointName + "</a></td>");
-                    row.append($("<td>").append(checkbox));
+                    //row.append($("<td>"));
                     row.append("<td id=\"val-" + pointName + "\"></td>");
                     row.append("<td id=\"ts-" + pointName + "\"></td>");
                     tBody.append(row);
