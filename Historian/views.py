@@ -27,6 +27,11 @@ def point(point_name):
     return render_template('point.html', message=message, **point_dict)
 
 
+@app.route('/cam')
+def cam():
+    return render_template('cam.html')
+
+
 @app.route('/', methods=['GET'])
 def point_values():
     return render_template('point_values.html', points=get_point_value_models().keys())
