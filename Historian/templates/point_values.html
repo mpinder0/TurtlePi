@@ -40,6 +40,7 @@
 				<table id="legend" class="table">
 					<thead>
 						<tr>
+                            <th></th>
 							<th>Sensor</th>
 							<th>Display</th>
 							<th>Value</th>
@@ -210,6 +211,8 @@
                 tBody = $("#legend").find("tbody");
                 tBody.empty();
 
+                var colours = $("#chart").highcharts().options.colors;
+
                 for(var i = 0; i < chartData.length; i++) {
                     pointName = chartData[i]["name"];
                     checkbox = $(document.createElement("input")).attr({
@@ -228,12 +231,13 @@
                         }
                     });
 
-                    tBody.append("<tr>");
-                    tBody.append("<td><a href=\"point/" + pointName + "\">" + pointName + "</a></td>");
-                    tBody.append($("<td>").append(checkbox));
-                    tBody.append("<td id=\"val-" + pointName + "\"></td>");
-                    tBody.append("<td id=\"ts-" + pointName + "\"></td>");
-                    tBody.append("</tr>");
+                    var row = $("<tr>")
+                    row.append("<td><span class=\"label\" style=\"background-color:"+ colours[i] +"\">&nbsp;</div></td>");
+                    row.append("<td><a href=\"point/" + pointName + "\">" + pointName + "</a></td>");
+                    row.append($("<td>").append(checkbox));
+                    row.append("<td id=\"val-" + pointName + "\"></td>");
+                    row.append("<td id=\"ts-" + pointName + "\"></td>");
+                    tBody.append(row);
 
                     $.getJSON("/api/point/" + pointName)
                         .done(function(data) {
