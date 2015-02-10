@@ -23,6 +23,7 @@
 						<button type="button" id="timespanDay" class="btn btn-default active">Day</button>
 						<button type="button" id="timespanWeek" class="btn btn-default">Week</button>
 						<button type="button" id="timespanAll" class="btn btn-default">All</button>
+                        <img id="chart_loader" src="static/loader_squares.gif" />
 					</div>
 					<div class="col-sm-6 text-right">
 						<input type="text" id="datepick" placeholder="DD/MM/YYYY" class="form-control">
@@ -31,7 +32,7 @@
 				</form>
 			</div>
 			
-			<div id="chart_message" class="alert alert-danger"></div>
+			<div id="chart_message" class="alert alert-danger hidden"></div>
 			<div class="row">
 				<div id="chart"></div>
 			</div>
@@ -139,6 +140,7 @@
 
 			function drawChart(jsonURL) {
 				$("#chart_message").hide();
+				$("#chart_loader").show();
 
 				$.getJSON(jsonURL)
 					.done(function(data) {
@@ -192,6 +194,9 @@
 					.fail(function() {
 						$("#chart_message").html("<strong>Error:</strong> Call to \"" + jsonURL + "\" for chart data, failed.")
 						$("#chart_message").show();
+					})
+					.always(function() {
+					    $("#chart_loader").hide();
 					});
 			}
 			function updateChart() {

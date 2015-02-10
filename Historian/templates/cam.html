@@ -8,20 +8,20 @@
 			$(document).ready(function() {
 
 			    loadImg();
-				setInterval(loadImg, 60000);
+				setInterval(loadImg, 30000);
 				
 				function loadImg() {
 					var url = "../static/cam.jpg?";
-					var $loader = $("<img />");
-					var $msg = $("#msg");
+					var $load_img = $("<img />");
+					var $loading = $("#loading");
 					
-					$loader.one("load", function() {
-						$("#cam").attr("src", $loader.attr("src"));
-						$msg.empty()
+					$load_img.one("load", function() {
+						$("#cam").attr("src", $load_img.attr("src"));
+						$loading.hide()
 					});
 					
-					$loader.attr("src", url + new Date().getTime())
-					$msg.html("Updating...");
+					$load_img.attr("src", url + new Date().getTime())
+					$loading.show()
 				}
 			});
 		</script>
@@ -29,6 +29,6 @@
             <li><a href="../">Points</a></li>
         </ul>
         <img id="cam" src="" />
-        <div id="msg"></div>
+        <img id="loading" src="static/loader_squares.gif" />
     </body>
 </html>
