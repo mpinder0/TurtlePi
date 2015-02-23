@@ -22,8 +22,8 @@ class W1Temperature(AbstractDataProvider):
             value = float(value_string[2:])
             value /= 1000
         except IOError:
-            print "IOError - return default value"
-            value = 0.0
+            print "Failed to get value for %s - IOError" % name
+            value = None
 
         return value
 

@@ -8,6 +8,7 @@ from abstractdataprovider import AbstractDataProvider
 #import urllib, urllib2
 #import json
 import requests
+from numbers import Number
 
 
 class Scheduler():
@@ -56,7 +57,8 @@ class Scheduler():
     def sensor_loop(self, interval, data_provider, sensor_name, point_name):
         while not self._stop_request:
             value = data_provider.get_value(sensor_name)
-            self.http_post_value(point_name, value)
+			if isinstance(value, Number):
+				self.http_post_value(point_name, value)
             time.sleep(interval)
 
     def start_sensor_task(self, interval, data_provider, sensor_name, point_name):
