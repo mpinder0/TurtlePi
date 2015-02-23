@@ -5,8 +5,6 @@ from datetime import datetime
 import time
 from threading import Thread
 from abstractdataprovider import AbstractDataProvider
-#import urllib, urllib2
-#import json
 import requests
 from numbers import Number
 
@@ -17,14 +15,7 @@ class Scheduler():
     _threads = []
     _sensor_data = []
 
-    # to remove
-    #interval = None
-    #_thread = None
-    #_tasks = []
-    #_task_args = []
-
     def __init__(self, historian_url=None):
-        #self.interval = interval
         if historian_url:
             self.historian_url = historian_url
 
@@ -37,18 +28,7 @@ class Scheduler():
         self._stop_request = True
         for t in self._threads:
             t.join()
-
-    #def work(self):
-    #    while not self._stop_request:
-    #        for i, task in enumerate(self._tasks):
-    #            task(*self._task_args[i])
-    #        time.sleep(self.interval)
-
-    #def add_task(self, task, *args):
-    #    if callable(task):
-    #        self._tasks.append(task)
-    #        self._task_args.append(args)
-
+			
     def add_sensor(self, interval, data_provider, sensor_name, point_name):
         if isinstance(data_provider, AbstractDataProvider):
             data = (interval, data_provider, sensor_name, point_name)
