@@ -8,4 +8,5 @@ from models import *
 from api import *
 from views import *
 
-app.run(host='0.0.0.0', debug=True)
+if __name__ == '__main__':
+	app.run(host='0.0.0.0', debug=True)
