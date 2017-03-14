@@ -8,7 +8,7 @@ from peewee import *
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-DATABASE = 'TurtlePi.db'
+DATABASE = '/var/www/historian/TurtlePi.db'
 database = SqliteDatabase(DATABASE, threadlocals=True)
 
 
