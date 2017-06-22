@@ -203,6 +203,7 @@
 				var url;
 				var days = chartTimespan.days;
 				var from = chartTimespan.from;
+				from.setDate(from.getDate() + 1);
 				if(days > 0) {
 					url = makeTurtlePiURL(from, days);
 				} else {
